@@ -1,18 +1,74 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using UnityEngine.UI;
 
-public class Player : MonoBehaviour
+public class player : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [Header("角色資料")]
+    public HeroData data;
+
+    private Rigidbody rig;
+    private Animator ani;
+    private Joystick joystick;
+
+    protected float[] skillTimer = new float[6];
+    protected bool[] skillStart = new bool[6];
+
+    protected virtual void Awake()
     {
-        
+        ani = GetComponent<Animator>();
+        rig = GetComponent<Rigidbody>();
+        joystick = GameObject.Find("虛擬搖桿").GetComponent<Joystick>();
     }
 
-    // Update is called once per frame
-    void Update()
+    protected virtual void Update()
     {
-        
+        TimerControl();
+        Move();
     }
+
+    /// <summary>
+    /// 技能冷卻
+    /// </summary>
+    private void TimerControl()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            if (skillStart[i])
+            {
+                skillTimer[i] += Time.deltaTime;
+
+                // 如果 計時器 >= 冷卻時間 就 歸零並且設定為 尚未開始
+                if (skillTimer[i] >= data.skills[i].cd)
+                {
+                    skillTimer[i] = 0;
+                    skillStart[i] = false;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 移動
+    /// </summary>
+    private void Move()
+    {
+        float v = joystick.Vertical;    // 垂直
+        float h = joystick.Horizontal;  // 水平
+
+        //rig.velocity = new Vector3(h * data.speed, rig.velocity.y);
+        rig.velocity = new Vector3(v * data.speed, rig.velocity.z);
+
+        ani.SetBool("跑步開關", v != 0 || h != 0);
+
+        if (h > 0)
+        {
+            transform.eulerAngles = new Vector3(0, 0, 0);
+        }
+        else if (h < 0)
+        {
+            transform.eulerAngles = new Vector3(0, 180, 0);
+        }
+    }
+
+
 }
